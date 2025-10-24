@@ -1,0 +1,12 @@
+{
+  "name": "bookmark-manager-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "http-server ./public -p 3000 -c-1",
+    "build": "echo 'No build needed for vanilla JS'"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}
