@@ -107,7 +107,7 @@ pub struct NewUser {
     pub full_name: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RegisterRequest {
     pub username: String,
     pub email: String,
@@ -115,7 +115,7 @@ pub struct RegisterRequest {
     pub full_name: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,

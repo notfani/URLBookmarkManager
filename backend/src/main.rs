@@ -10,6 +10,9 @@ mod config;
 mod auth;
 mod middleware;
 
+#[cfg(test)]
+mod tests;
+
 use handlers::*;
 
 
