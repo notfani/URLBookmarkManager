@@ -1,0 +1,28 @@
+FROM rust:1.86
+
+WORKDIR /app
+
+# Установка зависимостей
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libpq-dev \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка diesel_cli
+RUN cargo install diesel_cli --no-default-features --features postgres
+
+# Копирование файлов проекта
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+COPY migrations ./migrations
+
+# Создание .env файла
+RUN echo "DATABASE_URL=postgresql://postgres:password@postgres:5432/bookmark_manager" > .env
+
+# Сборка проекта (для кэширования зависимостей)
+RUN cargo build --release
+
+# Команда по умолчанию (будет переопределена в docker-compose)
+CMD ["cargo", "test", "--", "--nocapture"]
+

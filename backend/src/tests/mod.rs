@@ -395,13 +395,9 @@ pub mod tests {
 
     #[test]
     fn test_expired_jwt() {
-        // This test would need a token with past expiration
-        // For now, we just verify that a malformed token fails
         let result = auth::verify_jwt("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature");
         assert!(result.is_err());
     }
-
-    // ==================== Handler Tests ====================
 
     #[actix_web::test]
     async fn test_register_handler() {
@@ -621,7 +617,7 @@ pub mod tests {
             .to_request();
 
         let resp = test::call_service(&app, req).await;
-        assert_eq!(resp.status().as_u16(), 500); // или другой код ошибки
+        assert_eq!(resp.status().as_u16(), 500);
     }
 
     #[actix_web::test]
@@ -693,7 +689,6 @@ pub mod tests {
         assert!(resp.status().is_success());
     }
 
-    // ==================== Integration Tests ====================
 
     #[actix_web::test]
     async fn test_full_bookmark_lifecycle() {
@@ -702,7 +697,6 @@ pub mod tests {
         let user = create_test_user(&mut conn);
         let category = create_test_category(&mut conn, &user);
 
-        // Create bookmark
         let new_bookmark = NewBookmark {
             title: "Lifecycle Test",
             url: "https://lifecycle.com",
@@ -713,11 +707,9 @@ pub mod tests {
         let bookmark = db::create_bookmark(&mut conn, new_bookmark).unwrap();
         assert_eq!(bookmark.title, "Lifecycle Test");
 
-        // Get bookmark
         let found = db::get_bookmark_by_id(&mut conn, &bookmark.id).unwrap();
         assert_eq!(found.title, "Lifecycle Test");
 
-        // Update bookmark
         let update_data = crate::model::UpdateBookmark {
             title: Some("Updated Lifecycle"),
             url: None,
@@ -727,11 +719,9 @@ pub mod tests {
         let updated = db::update_bookmark(&mut conn, &bookmark.id, update_data).unwrap();
         assert_eq!(updated.title, "Updated Lifecycle");
 
-        // Delete bookmark
         let deleted = db::delete_bookmark(&mut conn, &bookmark.id).unwrap();
         assert_eq!(deleted, 1);
 
-        // Verify deletion
         let find_result = db::get_bookmark_by_id(&mut conn, &bookmark.id);
         assert!(find_result.is_err());
     }
@@ -747,7 +737,6 @@ pub mod tests {
                 .route("/api/login", web::post().to(login))
         ).await;
 
-        // Register new user
         let username = format!("authuser_{}", Uuid::new_v4());
         let register_req = test::TestRequest::post()
             .uri("/api/register")
@@ -762,7 +751,6 @@ pub mod tests {
         let register_resp = test::call_service(&app, register_req).await;
         assert!(register_resp.status().is_success());
 
-        // Login with registered user
         let login_req = test::TestRequest::post()
             .uri("/api/login")
             .set_json(&LoginRequest {
@@ -781,7 +769,6 @@ pub mod tests {
         let mut conn = pool.get().unwrap();
         let user = create_test_user(&mut conn);
 
-        // Create category
         let new_category = NewCategory {
             name: "Workflow Category",
             user_id: user.id,
@@ -789,11 +776,9 @@ pub mod tests {
         let category = db::create_category(&mut conn, new_category).unwrap();
         assert_eq!(category.name, "Workflow Category");
 
-        // Get category by ID
         let found_category = db::get_category_by_id(&mut conn, &category.id).unwrap();
         assert_eq!(found_category.id, category.id);
 
-        // Get user categories
         let user_categories = db::get_user_categories(&mut conn, &user.id).unwrap();
         assert!(user_categories.iter().any(|c| c.id == category.id));
     }
@@ -814,7 +799,6 @@ pub mod tests {
         };
         let bookmark = db::create_bookmark(&mut conn, new_bookmark).unwrap();
 
-        // Update only title
         let update_data = crate::model::UpdateBookmark {
             title: Some("New Title Only"),
             url: None,
@@ -824,7 +808,7 @@ pub mod tests {
 
         let updated = db::update_bookmark(&mut conn, &bookmark.id, update_data).unwrap();
         assert_eq!(updated.title, "New Title Only");
-        assert_eq!(updated.url, "https://partialupdate.com"); // Should remain unchanged
+        assert_eq!(updated.url, "https://partialupdate.com");
     }
 
     #[test]
@@ -861,12 +845,10 @@ pub mod tests {
         let category1 = create_test_category(&mut conn, &user1);
         let category2 = create_test_category(&mut conn, &user2);
 
-        // Get categories for user1
         let user1_categories = db::get_user_categories(&mut conn, &user1.id).unwrap();
         assert!(user1_categories.iter().any(|c| c.id == category1.id));
         assert!(!user1_categories.iter().any(|c| c.id == category2.id));
 
-        // Get categories for user2
         let user2_categories = db::get_user_categories(&mut conn, &user2.id).unwrap();
         assert!(user2_categories.iter().any(|c| c.id == category2.id));
         assert!(!user2_categories.iter().any(|c| c.id == category1.id));

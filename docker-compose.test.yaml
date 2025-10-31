@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    build:
+      context: ./database
+      dockerfile: Dockerfile
+    container_name: bookmark_postgres_test
+    environment:
+      POSTGRES_DB: bookmark_manager
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test_network
+
+  test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: bookmark_tests
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/bookmark_manager
+      - RUST_LOG=debug
+    command: >
+      sh -c "
+        echo '========================================' &&
+        echo '  Initializing test environment...' &&
+        echo '========================================' &&
+        sleep 2 &&
+        echo 'Running migrations...' &&
+        diesel migration run &&
+        echo '' &&
+        echo '========================================' &&
+        echo '  Running all tests...' &&
+        echo '========================================' &&
+        cargo test -- --nocapture --test-threads=1 &&
+        echo '' &&
+        echo '========================================' &&
+        echo '  ✅ All tests passed successfully!' &&
+        echo '========================================'
+      "
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    driver: bridge
+

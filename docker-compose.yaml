@@ -67,6 +67,34 @@ services:
       - bookmark_network
     restart: unless-stopped
 
+  test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: bookmark_tests
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/bookmark_manager
+      - RUST_LOG=info
+    command: >
+      sh -c "
+        echo '========================================' &&
+        echo '  Running automated tests...' &&
+        echo '========================================' &&
+        sleep 3 &&
+        diesel migration run &&
+        cargo test -- --nocapture &&
+        echo '========================================' &&
+        echo '  All tests completed!' &&
+        echo '========================================' &&
+        exit 0
+      "
+    networks:
+      - bookmark_network
+    restart: "no"
+
   nginx:
     image: nginx:alpine
     container_name: bookmark_nginx
